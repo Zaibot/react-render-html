@@ -5,39 +5,55 @@ var React = require('react');
 var convertAttr = require('react-attr-converter');
 var styleParser = require('./lib/style-parser');
 
-var renderNode = function (node, key) {
-  if (node.nodeName === '#text') {
-    return node.value;
-  }
+const compose = (...fns) => arg => fns.reduceRight((prev, fn) => fn(prev), arg);
 
-  if (node.nodeName === '#comment') {
-    return node.value;
-  }
+var renderNode = (renderNode) => {
+  return (node, key) => {
+    if (node.nodeName === '#text') {
+      return node.value;
+    }
 
-  var attr = node.attrs.reduce(function (result, attr) {
-    var name = convertAttr(attr.name);
-    result[name] = name === 'style' ? styleParser(attr.value) : attr.value;
-    return result;
-  }, {key: key});
+    if (node.nodeName === '#comment') {
+      return node.value;
+    }
 
-  if (node.childNodes.length === 0) {
-    return React.createElement(node.tagName, attr);
-  }
+    var attr = node.attrs.reduce(function (result, attr) {
+      var name = convertAttr(attr.name);
+      result[name] = name === 'style' ? styleParser(attr.value) : attr.value;
+      return result;
+    }, {key: key});
 
-  var children = node.childNodes.map(renderNode);
-  return React.createElement(node.tagName, attr, children);
+    if (node.childNodes.length === 0) {
+      return React.createElement(node.tagName, attr);
+    }
+
+    var children = node.childNodes.map(renderNode);
+    return React.createElement(node.tagName, attr, children);
+  };
 };
 
-var renderHTML = function (html) {
+// function applyMiddleware(list) {
+//   return list.filter(x => x !== undefined).reduce((next, cb) => {
+//     return (node, key) => cb((node, key) => next(node, key))(node, key);
+//   }, (node, key) => { throw new Error('Unhandled'); });
+// }
+
+export function applyMiddleware(...middlewares) {
+  return renderNode => (node, key) => {
+    const chain = middlewares.map(middleware => middleware(renderNode));
+    return compose(...chain)(node, key);
+  };
+}
+
+export default function renderHTML(html, ...middlewares) {
   var htmlAST = htmlParser.parseFragment(html);
 
   if (htmlAST.childNodes.length === 0) {
     return null;
   }
-
-  var result = htmlAST.childNodes.map(renderNode);
+  const middleware = applyMiddleware(...middlewares);
+  const finalRenderNode = (node, key) => middleware(finalRenderNode)(renderNode(finalRenderNode))(node, key);
+  const result = htmlAST.childNodes.map(finalRenderNode);
 
   return result.length === 1 ? result[0] : result;
 };
-
-module.exports = renderHTML;
