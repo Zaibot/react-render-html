@@ -38,14 +38,14 @@ var renderNode = (renderNode) => {
 //   }, (node, key) => { throw new Error('Unhandled'); });
 // }
 
-export function applyMiddleware(...middlewares) {
+function applyMiddleware(...middlewares) {
   return renderNode => (node, key) => {
     const chain = middlewares.map(middleware => middleware(renderNode));
     return compose(...chain)(node, key);
   };
 }
 
-export default function renderHTML(html, ...middlewares) {
+function renderHTML(html, ...middlewares) {
   var htmlAST = htmlParser.parseFragment(html);
 
   if (htmlAST.childNodes.length === 0) {
@@ -57,3 +57,7 @@ export default function renderHTML(html, ...middlewares) {
 
   return result.length === 1 ? result[0] : result;
 };
+
+exports.default = renderHTML;
+exports.renderHTML = renderHTML;
+exports.applyMiddleware = applyMiddleware;
