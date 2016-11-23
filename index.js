@@ -45,9 +45,11 @@ function applyMiddleware(...middlewares) {
   };
 }
 
-function renderHTML(html, ...middlewares) {
-  var htmlAST = htmlParser.parseFragment(html);
+function prepareAST(html) {
+  return htmlParser.parseFragment(html);
+}
 
+function renderAST(htmlAST, ...middlewares) {
   if (htmlAST.childNodes.length === 0) {
     return null;
   }
@@ -58,6 +60,12 @@ function renderHTML(html, ...middlewares) {
   return result.length === 1 ? result[0] : result;
 };
 
+function renderHTML(html, ...middlewares) {
+  return renderAST(prepareAST(html), ...middlewares);
+};
+
 exports.default = renderHTML;
+exports.prepareAST = prepareAST;
+exports.renderAST = renderAST;
 exports.renderHTML = renderHTML;
 exports.applyMiddleware = applyMiddleware;
