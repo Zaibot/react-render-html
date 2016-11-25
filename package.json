@@ -1,5 +1,5 @@
 {
-  "name": "zaibot-react-render-html",
+  "name": "@zaibot/react-render-html",
   "version": "0.1.6",
   "description": "No more dangerouslySetInnerHTML, render HTML as React element.",
   "main": "index.js",
